@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+</head>
+<body>
+<div id="app">
+  <v-app>
+    <v-main>
+      <v-container class="d-flex flex-column align-center">
+        <h3 class="text-h3 mb-16" style="overflow-wrap: break-word; max-width: 100%">0x39c31fCA8FB2c4acDcda582c77252B3c26cF986e.TIKI-BEAST-v2</h3>
+        <div class="d-flex flex-column flex-lg-row">
+          <v-card class="ma-2" width="400" outlined>
+            <v-list-item three-line>
+              <v-list-item-content>
+                <v-list-item-title class="text-h2 mb-1">{{ pool_speed }} MH/s</v-list-item-title>
+                <v-list-item-subtitle>Pool Effective Hashrate</v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+          </v-card>
+          <v-card class="ma-2" width="400" outlined>
+            <v-list-item three-line>
+              <v-list-item-content>
+                <v-list-item-title class="text-h2 mb-1">{{ reported_speed }} MH/s</v-list-item-title>
+                <v-list-item-subtitle>Machine Reported Hashrate</v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+          </v-card>
+          <v-card class="ma-2" width="400" outlined>
+            <v-list-item three-line>
+              <v-list-item-content>
+                <v-list-item-title class="text-h2 mb-1">{{ shares }}</v-list-item-title>
+                <v-list-item-subtitle>Accepted Shares</v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+          </v-card>
+        </div>
+        <div class="d-flex flex-column flex-lg-row">
+          <v-card class="ma-2" width="400" outlined>
+            <v-list-item three-line>
+              <v-list-item-content>
+                <v-list-item-title class="text-h2 mb-1">{{ efficiency }} KH/W</v-list-item-title>
+                <v-list-item-subtitle>Efficiency</v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+          </v-card>
+          <v-card class="ma-2" width="400" outlined>
+            <v-list-item three-line>
+              <v-list-item-content>
+                <v-list-item-title class="text-h2 mb-1">{{ power }} W</v-list-item-title>
+                <v-list-item-subtitle>Power</v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+          </v-card>
+          <v-card class="ma-2" width="400" outlined>
+            <v-list-item three-line>
+              <v-list-item-content>
+                <v-list-item-title class="text-h2 mb-1">{{ electricity }} kWh</v-list-item-title>
+                <v-list-item-subtitle>Electricity</v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+          </v-card>
+        </div>
+        <div class="d-flex flex-column flex-lg-row">
+          <v-card class="ma-2" width="400" outlined>
+            <v-list-item three-line>
+              <v-list-item-content>
+                <v-list-item-title class="text-h2 mb-1">{{ uptime }}</v-list-item-title>
+                <v-list-item-subtitle>Uptime</v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+          </v-card>
+          <v-card class="ma-2" width="400" outlined>
+            <v-list-item three-line>
+              <v-list-item-content>
+                <v-list-item-title class="text-h2 mb-1">{{ temperature }}</v-list-item-title>
+                <v-list-item-subtitle>Temperature (GPU / VRAM)</v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+          </v-card>
+        </div>
+      </v-container>
+    </v-main>
+  </v-app>
+</div>
+
+<script src="https://cdn.socket.io/4.4.1/socket.io.min.js" integrity="sha384-fKnu0iswBIqkjxrhQCTZ7qlLHOFEgNkRmK2vaO/LbTZSXdJfAu6ewRBdwHPhBo/H" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.2/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment-duration-format/2.3.2/moment-duration-format.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+<script>
+  new Vue({
+    el: "#app",
+    vuetify: new Vuetify({
+      theme: { dark: true }
+    }),
+    data() {
+      return {
+        pool_speed: 0,
+        reported_speed: 0,
+        shares: 0,
+        efficiency: 0,
+        power: 0,
+        electricity: 0,
+        uptime: '00:00:00',
+        temperature: '0 C / 0 C',
+      }
+    },
+    mounted() {
+      const socket = new io('/');
+
+      socket.on('data', (data) => {
+        this.pool_speed = (data.pool_speed / 1000000).toFixed(2);
+        this.electricity = data.electricity;
+
+        this.reported_speed = (data.devices[0].speed / 1000000).toFixed(2);
+        this.shares = data.devices[0].accepted_shares;
+        this.power = data.devices[0].power_usage;
+        this.temperature = `${data.devices[0].temperature} C / ${data.devices[0].memory_temperature} C`;
+
+        this.uptime = moment.duration(data.uptime, "seconds").format("hh:mm:ss", { trim: false });
+        this.efficiency = (this.reported_speed / this.power * 1000).toFixed(2);
+      });
+    }
+  });
+</script>
+</body>
+</html>
